@@ -41,6 +41,7 @@ import {
   LISTENING_PART_1,
   LISTENING_PART_2,
   SPEAKING_QUESTIONS,
+  SPEAKING_READ_ALOUD,
   GRAMMAR_QUESTIONS,
   VOCABULARY_QUESTIONS,
   READING_PASSAGE,
@@ -502,14 +503,16 @@ export default function App() {
   };
 
   // Dynamic question resolving based on current activeExam with fallback to static constants
-  const listeningPart1 = activeExam?.questions?.listeningPart1 || LISTENING_PART_1;
-  const listeningPart2 = activeExam?.questions?.listeningPart2 || LISTENING_PART_2;
-  const speakingQuestions = activeExam?.questions?.speakingQuestions || SPEAKING_QUESTIONS;
-  const speakingReadAloud = activeExam?.questions?.speakingReadAloud || { text: "The English language requires practice.", wordCount: 6 };
-  const grammarQuestions = activeExam?.questions?.grammar || GRAMMAR_QUESTIONS;
-  const vocabularyQuestions = activeExam?.questions?.vocabulary || VOCABULARY_QUESTIONS;
-  const readingPassage = activeExam?.questions?.readingPassage || READING_PASSAGE;
-  const writingQuestions = activeExam?.questions?.writingQuestions || WRITING_QUESTIONS;
+  const isCustomExam = activeExam && activeExam.id !== 'default-exam';
+
+  const listeningPart1 = isCustomExam ? (activeExam?.questions?.listeningPart1 || []) : (activeExam?.questions?.listeningPart1 || LISTENING_PART_1);
+  const listeningPart2 = isCustomExam ? (activeExam?.questions?.listeningPart2 || []) : (activeExam?.questions?.listeningPart2 || LISTENING_PART_2);
+  const speakingQuestions = isCustomExam ? (activeExam?.questions?.speakingQuestions || []) : (activeExam?.questions?.speakingQuestions || SPEAKING_QUESTIONS);
+  const speakingReadAloud = isCustomExam ? (activeExam?.questions?.speakingReadAloud || { text: "", wordCount: 0 }) : (activeExam?.questions?.speakingReadAloud || SPEAKING_READ_ALOUD);
+  const grammarQuestions = isCustomExam ? (activeExam?.questions?.grammar || []) : (activeExam?.questions?.grammar || GRAMMAR_QUESTIONS);
+  const vocabularyQuestions = isCustomExam ? (activeExam?.questions?.vocabulary || []) : (activeExam?.questions?.vocabulary || VOCABULARY_QUESTIONS);
+  const readingPassage = isCustomExam ? (activeExam?.questions?.readingPassage || { title: "", text: "", questionsPartA: [], questionsPartB: [] }) : (activeExam?.questions?.readingPassage || READING_PASSAGE);
+  const writingQuestions = isCustomExam ? (activeExam?.questions?.writingQuestions || []) : (activeExam?.questions?.writingQuestions || WRITING_QUESTIONS);
 
   // Define active question bank for the side navigator palette
   const getActiveSectionQuestions = () => {
@@ -540,15 +543,37 @@ export default function App() {
     }
   };
 
-  // Section List mapping
-  const SECTIONS_LIST = [
-    { id: 'listening', label: '1. Listening' },
-    { id: 'speaking', label: '2. Speaking' },
-    { id: 'grammar', label: '3. Grammar' },
-    { id: 'vocabulary', label: '4. Vocabulary' },
-    { id: 'reading', label: '5. Reading' },
-    { id: 'writing', label: '6. Writing' }
+  // Section List mapping (Dynamically filter out sections with no questions)
+  const ALL_SECTIONS_LIST = [
+    { id: 'listening', label: 'Listening' },
+    { id: 'speaking', label: 'Speaking' },
+    { id: 'grammar', label: 'Grammar' },
+    { id: 'vocabulary', label: 'Vocabulary' },
+    { id: 'reading', label: 'Reading' },
+    { id: 'writing', label: 'Writing' }
   ];
+
+  const SECTIONS_LIST = ALL_SECTIONS_LIST.filter(sec => {
+    switch (sec.id) {
+      case 'listening':
+        return listeningPart1.length > 0 || listeningPart2.length > 0;
+      case 'speaking':
+        return speakingQuestions.length > 0 || (speakingReadAloud && speakingReadAloud.text && speakingReadAloud.text.trim().length > 0);
+      case 'grammar':
+        return grammarQuestions.length > 0;
+      case 'vocabulary':
+        return vocabularyQuestions.length > 0;
+      case 'reading':
+        return (readingPassage?.questionsPartA?.length || 0) > 0 || (readingPassage?.questionsPartB?.length || 0) > 0 || (readingPassage?.text?.trim()?.length || 0) > 0;
+      case 'writing':
+        return writingQuestions.length > 0;
+      default:
+        return false;
+    }
+  }).map((sec, idx) => ({
+    id: sec.id,
+    label: `${idx + 1}. ${sec.label}`
+  }));
 
   // Renders the specific active section
   const renderActiveSection = () => {
@@ -903,7 +928,7 @@ export default function App() {
             <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
               <button
                 type="button"
-                disabled={currentSection === 'listening'}
+                disabled={SECTIONS_LIST.findIndex(s => s.id === currentSection) <= 0}
                 onClick={() => {
                   const idx = SECTIONS_LIST.findIndex(s => s.id === currentSection);
                   if (idx > 0) {
@@ -916,10 +941,10 @@ export default function App() {
               </button>
               
               <span className="text-[10px] font-black text-indigo-900 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-full uppercase tracking-wider select-none">
-                {SECTIONS_LIST.findIndex(s => s.id === currentSection) + 1} / 6: {SECTIONS_LIST.find(s => s.id === currentSection)?.label.split('. ')[1]}
+                {SECTIONS_LIST.findIndex(s => s.id === currentSection) + 1} / {SECTIONS_LIST.length}: {SECTIONS_LIST.find(s => s.id === currentSection)?.label.split('. ')[1]}
               </span>
 
-              {currentSection !== 'writing' ? (
+              {SECTIONS_LIST.findIndex(s => s.id === currentSection) < SECTIONS_LIST.length - 1 ? (
                 <button
                   type="button"
                   onClick={() => {

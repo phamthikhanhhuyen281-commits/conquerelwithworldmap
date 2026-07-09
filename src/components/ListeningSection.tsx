@@ -26,7 +26,7 @@ export default function ListeningSection({
   audio2Url = 'https://storage.m3cdn.xyz/audio/1782652932822-rental.mp3'
 }: ListeningSectionProps) {
   const getProxiedUrl = (url?: string) => {
-    if (!url) return '';
+    if (!url || url.trim() === '') return undefined;
     return url;
   };
 
@@ -312,6 +312,18 @@ export default function ListeningSection({
                         </h4>
                       </div>
 
+                      {/* Optional Question Image */}
+                      {q.imageUrl && q.imageUrl.trim() !== '' && (
+                        <div className="mb-4 max-w-full md:max-w-md overflow-hidden rounded-xl border border-slate-200 shadow-sm bg-white p-1">
+                          <img
+                            src={q.imageUrl}
+                            alt={`Question ${idx + 1}`}
+                            className="w-full h-auto object-cover rounded-lg"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                      )}
+
                       {isSkipped ? (
                         <div className="bg-amber-100/40 border border-amber-200 text-amber-900 rounded-xl p-3.5 flex items-center justify-between text-xs font-semibold">
                           <span className="flex items-center gap-1.5 text-slate-700">
@@ -547,22 +559,40 @@ export default function ListeningSection({
                           currentAnswer ? 'border-indigo-100 bg-indigo-50/15' : 'border-slate-150 bg-slate-50/20'
                         }`}
                       >
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-slate-700 text-xs md:text-sm">
-                          <span className="text-xs font-bold font-mono text-indigo-900 bg-indigo-100/70 px-2 py-0.5 rounded-md shrink-0">
-                            Q{(idx + 1 + questionsPart1.length).toString().padStart(2, '0')}
-                          </span>
-                          <span className="font-bold text-slate-800 leading-snug grow">{q.text}</span>
-                          <input
-                            type="text"
-                            id={`input-blank-${q.id}`}
-                            placeholder="Nhập câu trả lời..."
-                            value={currentAnswer}
-                            onChange={(e) => {
-                              onAnswerChange(q.id, e.target.value);
-                              setCurrentQuestionId(q.id);
-                            }}
-                            className="border-b-2 border-indigo-300 focus:border-indigo-600 focus:bg-indigo-50/30 outline-none px-2 font-bold text-indigo-950 min-w-[150px] bg-transparent py-0.5 text-center transition-all text-xs placeholder:text-slate-300"
-                          />
+                        <div className="flex flex-col gap-3 text-slate-700 text-xs md:text-sm">
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs font-bold font-mono text-indigo-900 bg-indigo-100/70 px-2 py-0.5 rounded-md shrink-0">
+                              Q{(idx + 1 + questionsPart1.length).toString().padStart(2, '0')}
+                            </span>
+                            <span className="font-bold text-slate-800 leading-snug grow">{q.text}</span>
+                          </div>
+
+                          {/* Optional Question Image */}
+                          {q.imageUrl && q.imageUrl.trim() !== '' && (
+                            <div className="max-w-full md:max-w-md overflow-hidden rounded-xl border border-slate-200 shadow-sm bg-white p-1">
+                              <img
+                                src={q.imageUrl}
+                                alt={`Question ${idx + 1 + questionsPart1.length}`}
+                                className="w-full h-auto object-cover rounded-lg"
+                                referrerPolicy="no-referrer"
+                              />
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2 pt-1">
+                            <span className="text-xs font-semibold text-slate-500">Đáp án:</span>
+                            <input
+                              type="text"
+                              id={`input-blank-${q.id}`}
+                              placeholder="Nhập câu trả lời..."
+                              value={currentAnswer}
+                              onChange={(e) => {
+                                onAnswerChange(q.id, e.target.value);
+                                setCurrentQuestionId(q.id);
+                              }}
+                              className="border-b-2 border-indigo-300 focus:border-indigo-600 focus:bg-indigo-50/30 outline-none px-2 font-bold text-indigo-950 min-w-[200px] bg-transparent py-0.5 transition-all text-xs"
+                            />
+                          </div>
                         </div>
                       </div>
                     );

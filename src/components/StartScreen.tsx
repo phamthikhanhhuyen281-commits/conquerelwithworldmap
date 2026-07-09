@@ -128,7 +128,7 @@ export default function StartScreen({ onRegister, loading, onAdminClick, setting
           >
             {/* Logo Section */}
             <div className="flex justify-center mb-6">
-              {settings.logoUrl ? (
+              {settings.logoUrl && settings.logoUrl.trim() !== '' ? (
                 <img
                   src={settings.logoUrl}
                   alt="Logo"

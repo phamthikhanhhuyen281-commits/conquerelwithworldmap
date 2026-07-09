@@ -240,6 +240,7 @@ export default function AdminPanel({ onBackToTest }: AdminPanelProps) {
   const [qbSkill, setQbSkill] = useState<string>('listeningPart1');
   const [qbQuestionText, setQbQuestionText] = useState<string>('');
   const [qbAudioUrl, setQbAudioUrl] = useState<string>('');
+  const [qbImageUrl, setQbImageUrl] = useState<string>('');
   const [qbOptions, setQbOptions] = useState<string[]>(['', '', '', '']);
   const [qbCorrectAnswer, setQbCorrectAnswer] = useState<string>('A');
   const [qbPassage, setQbPassage] = useState<string>('');
@@ -417,6 +418,7 @@ export default function AdminPanel({ onBackToTest }: AdminPanelProps) {
       currentObj.listeningPart1.push({
         id: uniqueId,
         audioUrl: qbAudioUrl.trim() || undefined,
+        imageUrl: qbImageUrl.trim() || undefined,
         question: qbQuestionText.trim(),
         options: [...qbOptions],
         answer: qbCorrectAnswer
@@ -424,6 +426,7 @@ export default function AdminPanel({ onBackToTest }: AdminPanelProps) {
     } else if (qbSkill === 'listeningPart2') {
       currentObj.listeningPart2.push({
         id: uniqueId,
+        imageUrl: qbImageUrl.trim() || undefined,
         question: qbQuestionText.trim(),
         options: [...qbOptions],
         answer: qbCorrectAnswer
@@ -481,6 +484,8 @@ export default function AdminPanel({ onBackToTest }: AdminPanelProps) {
 
     setExamQuestionsJson(JSON.stringify(currentObj, null, 2));
     setQbQuestionText('');
+    setQbAudioUrl('');
+    setQbImageUrl('');
     showAlert('Thành công', 'Đã chèn câu hỏi mới vào cấu trúc JSON bên dưới!', 'success');
   };
 
@@ -535,40 +540,77 @@ export default function AdminPanel({ onBackToTest }: AdminPanelProps) {
             </select>
           </div>
 
-          {/* If Listening Part 1: allow adding audio URL / Upload file */}
-          {qbSkill === 'listeningPart1' && (
-            <div className="space-y-1">
-              <label className="block text-[9px] font-bold text-slate-500 uppercase">
-                2. Link Audio hoặc Tải file nghe câu này (Nếu có)
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Nhập URL file mp3..."
-                  value={qbAudioUrl}
-                  onChange={(e) => setQbAudioUrl(e.target.value)}
-                  className="flex-1 px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-indigo-900 bg-white"
-                />
-                <label className="bg-indigo-900 hover:bg-indigo-850 text-white text-[10px] px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors font-bold shrink-0 flex items-center justify-center">
-                  Tải file
-                  <input
-                    type="file"
-                    accept="audio/*"
-                    className="hidden"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        try {
-                          const url = await storageService.uploadFile(file, 'exams/questions/audio');
-                          setQbAudioUrl(url);
-                          showAlert('Thành công', 'Đã tải lên audio cho câu hỏi!', 'success');
-                        } catch (err: any) {
-                          showAlert('Lỗi', err.message, 'error');
-                        }
-                      }
-                    }}
-                  />
+          {/* If Listening: allow adding audio URL and image URL */}
+          {(qbSkill === 'listeningPart1' || qbSkill === 'listeningPart2') && (
+            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="block text-[9px] font-bold text-slate-500 uppercase">
+                  2A. Link Audio hoặc Tải file nghe câu này (Nếu có)
                 </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Nhập URL file mp3..."
+                    value={qbAudioUrl}
+                    onChange={(e) => setQbAudioUrl(e.target.value)}
+                    className="flex-1 px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-indigo-900 bg-white"
+                  />
+                  <label className="bg-indigo-900 hover:bg-indigo-850 text-white text-[10px] px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors font-bold shrink-0 flex items-center justify-center">
+                    Tải file
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          try {
+                            const url = await storageService.uploadFile(file, 'exams/questions/audio');
+                            setQbAudioUrl(url);
+                            showAlert('Thành công', 'Đã tải lên audio cho câu hỏi!', 'success');
+                          } catch (err: any) {
+                            showAlert('Lỗi', err.message, 'error');
+                          }
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[9px] font-bold text-slate-500 uppercase">
+                  2B. Link Tranh / Ảnh minh họa hoặc Tải ảnh (Nếu có)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Nhập URL hình ảnh..."
+                    value={qbImageUrl}
+                    onChange={(e) => setQbImageUrl(e.target.value)}
+                    className="flex-1 px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-indigo-900 bg-white"
+                  />
+                  <label className="bg-indigo-900 hover:bg-indigo-850 text-white text-[10px] px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors font-bold shrink-0 flex items-center justify-center">
+                    Tải ảnh
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          try {
+                            const url = await storageService.uploadFile(file, 'exams/questions/images');
+                            setQbImageUrl(url);
+                            showAlert('Thành công', 'Đã tải lên ảnh minh họa thành công!', 'success');
+                          } catch (err: any) {
+                            showAlert('Lỗi', err.message, 'error');
+                          }
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
               </div>
             </div>
           )}
@@ -3505,7 +3547,7 @@ export default function AdminPanel({ onBackToTest }: AdminPanelProps) {
                               <p className="text-xs text-slate-800 leading-relaxed font-serif">"{readAloudText}"</p>
                             </div>
 
-                            {selectedCandidate.answers?.speakingPart1?.audioPath ? (
+                            {selectedCandidate.answers?.speakingPart1?.audioPath && selectedCandidate.answers.speakingPart1.audioPath.trim() !== '' ? (
                               <div className="space-y-3">
                                 <audio src={selectedCandidate.answers.speakingPart1.audioPath} controls className="w-full h-9 rounded-lg" preload="metadata" />
                                 <a
@@ -3542,7 +3584,7 @@ export default function AdminPanel({ onBackToTest }: AdminPanelProps) {
                                       <p className="text-xs font-bold text-slate-800 leading-snug my-1 italic shrink-0">"{qText}"</p>
                                     </div>
                                     <div className="pt-2">
-                                      {audioPath ? (
+                                      {audioPath && audioPath.trim() !== '' ? (
                                         <audio src={audioPath} controls className="w-full h-8" preload="metadata" />
                                       ) : (
                                         <span className="text-[10px] text-slate-400 italic block">Không có ghi âm</span>
