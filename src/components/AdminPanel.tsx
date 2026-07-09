@@ -674,6 +674,235 @@ export default function AdminPanel({ onBackToTest }: AdminPanelProps) {
     );
   };
 
+  const renderAIScanner = () => {
+    return (
+      <div className="space-y-4">
+        {/* AI Scan box */}
+        <div className="bg-indigo-950 text-white rounded-2xl p-5 shadow-md border border-indigo-900 relative overflow-hidden">
+          <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-indigo-900/40 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+            <h4 className="text-xs font-black uppercase tracking-wide text-amber-400">QUÉT ĐỀ BẰNG AI (AI EXAM SCANNER)</h4>
+          </div>
+          <p className="text-[11px] text-indigo-200 leading-relaxed mb-4">
+            Tải lên một file ảnh đề thi hoặc file PDF. Trí tuệ nhân tạo Gemini AI sẽ tự động phân tích và bóc tách dữ liệu câu hỏi rồi điền tự động vào đề thi số cho bạn.
+          </p>
+
+          <div className="relative border-2 border-dashed border-indigo-700/60 hover:border-indigo-500 rounded-xl p-4 bg-indigo-900/20 text-center transition-all">
+            {scanLoading ? (
+              <div className="py-4 flex flex-col items-center justify-center space-y-2">
+                <div className="w-7 h-7 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                <p className="text-xs font-bold text-amber-300">AI đang quét và phân tích đề thi... Vui lòng chờ 10-20 giây...</p>
+              </div>
+            ) : (
+              <label className="cursor-pointer block py-2">
+                <input 
+                  type="file" 
+                  accept="image/*,application/pdf" 
+                  className="hidden" 
+                  onChange={handleAIScanExam}
+                />
+                <Sparkles className="w-6 h-6 text-indigo-400 mx-auto mb-2" />
+                <span className="text-xs font-bold text-indigo-200 block">Kéo thả hoặc click chọn file Đề thi (Ảnh hoặc PDF)</span>
+                <span className="text-[9px] text-indigo-400 block mt-1">Hỗ trợ .png, .jpg, .jpeg, .pdf (Quét bằng Gemini-3.5-Flash)</span>
+              </label>
+            )}
+          </div>
+
+          {scanError && (
+            <div className="mt-3 p-2 bg-rose-500/20 border border-rose-500/30 rounded-lg text-[10px] text-rose-300">
+              Lỗi quét: {scanError}
+            </div>
+          )}
+        </div>
+
+        {/* AI Scanned Questions Review Board */}
+        {scannedQuestions && scannedQuestions.length > 0 && (
+          <div className="bg-slate-50 border border-indigo-150 rounded-2xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-indigo-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-indigo-600 animate-pulse" />
+                <div>
+                  <h3 className="text-xs font-black text-indigo-950 uppercase tracking-wider">
+                    DUYỆT CÂU HỎI QUÉT BẰNG AI ({scannedQuestions.length} câu)
+                  </h3>
+                  <p className="text-[10px] text-slate-500 font-medium">
+                    AI đã quét và trích xuất thành công các câu hỏi từ hình ảnh. Vui lòng kiểm tra, chọn kỹ năng (Skill) và bấm chèn vào đề thi.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleInsertAllScannedQuestions}
+                  className="text-[11px] bg-indigo-950 hover:bg-indigo-900 text-white font-bold py-1.5 px-3 rounded-lg transition-all shadow-sm cursor-pointer uppercase tracking-wider"
+                >
+                  Chèn tất cả ({scannedQuestions.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScannedQuestions([])}
+                  className="text-[11px] bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-1.5 px-3 rounded-lg transition-all cursor-pointer"
+                >
+                  Xóa hết
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1 scrollbar-thin">
+              {scannedQuestions.map((q, qIndex) => {
+                return (
+                  <div key={qIndex} className="bg-white border border-slate-250 rounded-xl p-4 shadow-xs hover:border-indigo-200 transition-all space-y-3 relative">
+                    {/* Header: Select skill for this question */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-2">
+                      <span className="text-[10px] font-black text-indigo-900 bg-indigo-50 px-2 py-0.5 rounded-md self-start uppercase">
+                        Câu {qIndex + 1} ({q.type === 'mcq' ? 'Trắc nghiệm' : q.type === 'blank' ? 'Điền khuyết' : q.type === 'writing' ? 'Tự luận viết' : 'Nói'})
+                      </span>
+                      
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-500 shrink-0 uppercase">Kỹ năng (Skill):</span>
+                        <select
+                          value={q.suggestedSkill}
+                          onChange={(e) => {
+                            const updated = [...scannedQuestions];
+                            updated[qIndex].suggestedSkill = e.target.value;
+                            setScannedQuestions(updated);
+                          }}
+                          className="px-2 py-1 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-900 bg-slate-50 cursor-pointer"
+                        >
+                          <option value="listeningPart1">Listening Part 1 (Trắc nghiệm)</option>
+                          <option value="listeningPart2">Listening Part 2 (Điền khuyết)</option>
+                          <option value="grammar">Grammar (Trắc nghiệm/Điền khuyết)</option>
+                          <option value="vocabulary">Vocabulary (Trắc nghiệm)</option>
+                          <option value="readingPartA">Reading Part A (Chọn từ đọc hiểu)</option>
+                          <option value="readingPartB">Reading Part B (Đúng / Sai / Không đề cập)</option>
+                          <option value="writing">Writing (Viết luận)</option>
+                          <option value="speaking">Speaking (Ghi âm câu trả lời)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Question Text */}
+                    <div className="space-y-1">
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase">Nội dung câu hỏi</label>
+                      <textarea
+                        value={q.text}
+                        onChange={(e) => {
+                          const updated = [...scannedQuestions];
+                          updated[qIndex].text = e.target.value;
+                          setScannedQuestions(updated);
+                        }}
+                        rows={2}
+                        className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-indigo-900 bg-white"
+                        placeholder="Nhập câu hỏi..."
+                      />
+                    </div>
+
+                    {/* Passage (only if readingPartA or readingPartB) */}
+                    {(q.suggestedSkill === 'readingPartA' || q.suggestedSkill === 'readingPartB') && (
+                      <div className="space-y-1 bg-amber-50/50 p-2 border border-amber-100 rounded-lg">
+                        <label className="block text-[10px] font-bold text-amber-800 uppercase">Đoạn văn đọc hiểu (Passage Context)</label>
+                        <textarea
+                          value={q.passage || ''}
+                          onChange={(e) => {
+                            const updated = [...scannedQuestions];
+                            updated[qIndex].passage = e.target.value;
+                            setScannedQuestions(updated);
+                          }}
+                          rows={3}
+                          className="w-full px-3 py-1.5 border border-amber-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-amber-500 bg-white"
+                          placeholder="Nhập đoạn văn đọc hiểu cho câu hỏi này..."
+                        />
+                      </div>
+                    )}
+
+                    {/* Options (MCQ only) */}
+                    {q.type === 'mcq' && q.options && (
+                      <div className="grid grid-cols-2 gap-2 bg-slate-50/50 p-2.5 border border-slate-100 rounded-lg">
+                        {q.options.map((opt: string, optIdx: number) => (
+                          <div key={optIdx} className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-black text-slate-400">{String.fromCharCode(65 + optIdx)}.</span>
+                            <input
+                              type="text"
+                              value={opt}
+                              onChange={(e) => {
+                                const updated = [...scannedQuestions];
+                                updated[qIndex].options[optIdx] = e.target.value;
+                                setScannedQuestions(updated);
+                              }}
+                              className="w-full px-2 py-1 border border-slate-200 rounded-md text-xs font-medium bg-white"
+                              placeholder={`Lựa chọn ${String.fromCharCode(65 + optIdx)}`}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Answer (MCQ, Blank, Writing) */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase">Đáp án đúng:</span>
+                        {q.type === 'mcq' ? (
+                          <select
+                            value={q.answer || 'A'}
+                            onChange={(e) => {
+                              const updated = [...scannedQuestions];
+                              updated[qIndex].answer = e.target.value;
+                              setScannedQuestions(updated);
+                            }}
+                            className="px-2 py-1 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 bg-white cursor-pointer"
+                          >
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={q.answer || ''}
+                            onChange={(e) => {
+                              const updated = [...scannedQuestions];
+                              updated[qIndex].answer = e.target.value;
+                              setScannedQuestions(updated);
+                            }}
+                            className="px-2 py-1 border border-slate-200 rounded-lg text-xs font-medium bg-white w-40"
+                            placeholder="Nhập từ đáp án..."
+                          />
+                        )}
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleInsertSingleScannedQuestion(qIndex)}
+                          className="text-[10px] bg-indigo-900 hover:bg-indigo-850 text-white font-bold py-1 px-2.5 rounded-lg transition-colors cursor-pointer"
+                        >
+                          Chèn câu này
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = scannedQuestions.filter((_, idx) => idx !== qIndex);
+                            setScannedQuestions(updated);
+                          }}
+                          className="text-[10px] bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-1 px-2.5 rounded-lg transition-colors cursor-pointer border border-rose-100"
+                        >
+                          Xóa khỏi danh sách
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const handleInsertSingleScannedQuestion = (index: number) => {
     const q = scannedQuestions[index];
     if (!q) return;
@@ -2554,229 +2783,7 @@ export default function AdminPanel({ onBackToTest }: AdminPanelProps) {
                   </div>
                 </div>
 
-                <>
-                    {/* AI Scan box */}
-                    <div className="bg-indigo-950 text-white rounded-2xl p-5 shadow-md border border-indigo-900 relative overflow-hidden">
-                      <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-indigo-900/40 rounded-full blur-3xl pointer-events-none" />
-                      
-                      <div className="flex items-center gap-2 mb-3">
-                        <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                        <h4 className="text-xs font-black uppercase tracking-wide text-amber-400">QUÉT ĐỀ BẰNG AI (AI EXAM SCANNER)</h4>
-                      </div>
-                      <p className="text-[11px] text-indigo-200 leading-relaxed mb-4">
-                        Tải lên một file ảnh đề thi hoặc file PDF. Trí tuệ nhân tạo Gemini AI sẽ tự động phân tích và bóc tách dữ liệu câu hỏi rồi điền tự động cấu trúc đề thi số cho bạn.
-                      </p>
-
-                      <div className="relative border-2 border-dashed border-indigo-700/60 hover:border-indigo-500 rounded-xl p-4 bg-indigo-900/20 text-center transition-all">
-                        {scanLoading ? (
-                          <div className="py-4 flex flex-col items-center justify-center space-y-2">
-                            <div className="w-7 h-7 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
-                            <p className="text-xs font-bold text-amber-300">AI đang quét và phân tích đề thi... Vui lòng chờ 10-20 giây...</p>
-                          </div>
-                        ) : (
-                          <label className="cursor-pointer block py-2">
-                            <input 
-                              type="file" 
-                              accept="image/*,application/pdf" 
-                              className="hidden" 
-                              onChange={handleAIScanExam}
-                            />
-                            <Sparkles className="w-6 h-6 text-indigo-400 mx-auto mb-2" />
-                            <span className="text-xs font-bold text-indigo-200 block">Kéo thả hoặc click chọn file Đề thi (Ảnh hoặc PDF)</span>
-                            <span className="text-[9px] text-indigo-400 block mt-1">Hỗ trợ .png, .jpg, .jpeg, .pdf (Quét bằng Gemini-3.5-Flash)</span>
-                          </label>
-                        )}
-                      </div>
-
-                      {scanError && (
-                        <div className="mt-3 p-2 bg-rose-500/20 border border-rose-500/30 rounded-lg text-[10px] text-rose-300">
-                          Lỗi quét: {scanError}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* AI Scanned Questions Review Board */}
-                    {scannedQuestions && scannedQuestions.length > 0 && (
-                      <div className="bg-slate-50 border border-indigo-150 rounded-2xl p-5 shadow-sm space-y-4">
-                        <div className="flex items-center justify-between border-b border-indigo-100 pb-3">
-                          <div className="flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-indigo-600 animate-pulse" />
-                            <div>
-                              <h3 className="text-xs font-black text-indigo-950 uppercase tracking-wider">
-                                DUYỆT CÂU HỎI QUÉT BẰNG AI ({scannedQuestions.length} câu)
-                              </h3>
-                              <p className="text-[10px] text-slate-500 font-medium">
-                                AI đã quét và trích xuất thành công các câu hỏi từ hình ảnh. Vui lòng kiểm tra, chọn kỹ năng (Skill) và bấm chèn vào đề thi.
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={handleInsertAllScannedQuestions}
-                              className="text-[11px] bg-indigo-950 hover:bg-indigo-900 text-white font-bold py-1.5 px-3 rounded-lg transition-all shadow-sm cursor-pointer uppercase tracking-wider"
-                            >
-                              Chèn tất cả ({scannedQuestions.length})
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setScannedQuestions([])}
-                              className="text-[11px] bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-1.5 px-3 rounded-lg transition-all cursor-pointer"
-                            >
-                              Xóa hết
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1 scrollbar-thin">
-                          {scannedQuestions.map((q, qIndex) => {
-                            return (
-                              <div key={qIndex} className="bg-white border border-slate-250 rounded-xl p-4 shadow-xs hover:border-indigo-200 transition-all space-y-3 relative">
-                                {/* Header: Select skill for this question */}
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-2">
-                                  <span className="text-[10px] font-black text-indigo-900 bg-indigo-50 px-2 py-0.5 rounded-md self-start uppercase">
-                                    Câu {qIndex + 1} ({q.type === 'mcq' ? 'Trắc nghiệm' : q.type === 'blank' ? 'Điền khuyết' : q.type === 'writing' ? 'Tự luận viết' : 'Nói'})
-                                  </span>
-                                  
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold text-slate-500 shrink-0 uppercase">Kỹ năng (Skill):</span>
-                                    <select
-                                      value={q.suggestedSkill}
-                                      onChange={(e) => {
-                                        const updated = [...scannedQuestions];
-                                        updated[qIndex].suggestedSkill = e.target.value;
-                                        setScannedQuestions(updated);
-                                      }}
-                                      className="px-2 py-1 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-900 bg-slate-50 cursor-pointer"
-                                    >
-                                      <option value="listeningPart1">Listening Part 1 (Trắc nghiệm)</option>
-                                      <option value="listeningPart2">Listening Part 2 (Điền khuyết)</option>
-                                      <option value="grammar">Grammar (Trắc nghiệm/Điền khuyết)</option>
-                                      <option value="vocabulary">Vocabulary (Trắc nghiệm)</option>
-                                      <option value="readingPartA">Reading Part A (Chọn từ đọc hiểu)</option>
-                                      <option value="readingPartB">Reading Part B (Đúng / Sai / Không đề cập)</option>
-                                      <option value="writing">Writing (Viết luận)</option>
-                                      <option value="speaking">Speaking (Ghi âm câu trả lời)</option>
-                                    </select>
-                                  </div>
-                                </div>
-
-                                {/* Question Text */}
-                                <div className="space-y-1">
-                                  <label className="block text-[10px] font-bold text-slate-500 uppercase">Nội dung câu hỏi</label>
-                                  <textarea
-                                    value={q.text}
-                                    onChange={(e) => {
-                                      const updated = [...scannedQuestions];
-                                      updated[qIndex].text = e.target.value;
-                                      setScannedQuestions(updated);
-                                    }}
-                                    rows={2}
-                                    className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-indigo-900 bg-white"
-                                    placeholder="Nhập câu hỏi..."
-                                  />
-                                </div>
-
-                                {/* Passage (only if readingPartA or readingPartB) */}
-                                {(q.suggestedSkill === 'readingPartA' || q.suggestedSkill === 'readingPartB') && (
-                                  <div className="space-y-1 bg-amber-50/50 p-2 border border-amber-100 rounded-lg">
-                                    <label className="block text-[10px] font-bold text-amber-800 uppercase">Đoạn văn đọc hiểu (Passage Context)</label>
-                                    <textarea
-                                      value={q.passage || ''}
-                                      onChange={(e) => {
-                                        const updated = [...scannedQuestions];
-                                        updated[qIndex].passage = e.target.value;
-                                        setScannedQuestions(updated);
-                                      }}
-                                      rows={3}
-                                      className="w-full px-3 py-1.5 border border-amber-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-1 focus:ring-amber-500 bg-white"
-                                      placeholder="Nhập đoạn văn đọc hiểu cho câu hỏi này..."
-                                    />
-                                  </div>
-                                )}
-
-                                {/* Options (MCQ only) */}
-                                {q.type === 'mcq' && q.options && (
-                                  <div className="grid grid-cols-2 gap-2 bg-slate-50/50 p-2.5 border border-slate-100 rounded-lg">
-                                    {q.options.map((opt: string, optIdx: number) => (
-                                      <div key={optIdx} className="flex items-center gap-1.5">
-                                        <span className="text-[10px] font-black text-slate-400">{String.fromCharCode(65 + optIdx)}.</span>
-                                        <input
-                                          type="text"
-                                          value={opt}
-                                          onChange={(e) => {
-                                            const updated = [...scannedQuestions];
-                                            updated[qIndex].options[optIdx] = e.target.value;
-                                            setScannedQuestions(updated);
-                                          }}
-                                          className="w-full px-2 py-1 border border-slate-200 rounded-md text-xs font-medium bg-white"
-                                          placeholder={`Lựa chọn ${String.fromCharCode(65 + optIdx)}`}
-                                        />
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-
-                                {/* Answer (MCQ, Blank, Writing) */}
-                                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Đáp án đúng:</span>
-                                    {q.type === 'mcq' ? (
-                                      <select
-                                        value={q.answer || 'A'}
-                                        onChange={(e) => {
-                                          const updated = [...scannedQuestions];
-                                          updated[qIndex].answer = e.target.value;
-                                          setScannedQuestions(updated);
-                                        }}
-                                        className="px-2 py-1 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 bg-white cursor-pointer"
-                                      >
-                                        <option value="A">A</option>
-                                        <option value="B">B</option>
-                                        <option value="C">C</option>
-                                        <option value="D">D</option>
-                                      </select>
-                                    ) : (
-                                      <input
-                                        type="text"
-                                        value={q.answer || ''}
-                                        onChange={(e) => {
-                                          const updated = [...scannedQuestions];
-                                          updated[qIndex].answer = e.target.value;
-                                          setScannedQuestions(updated);
-                                        }}
-                                        className="px-2 py-1 border border-slate-200 rounded-lg text-xs font-medium bg-white w-40"
-                                        placeholder="Nhập từ đáp án..."
-                                      />
-                                    )}
-                                  </div>
-
-                                  <div className="flex gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleInsertSingleScannedQuestion(qIndex)}
-                                      className="text-[10px] bg-indigo-900 hover:bg-indigo-850 text-white font-bold py-1 px-2.5 rounded-lg transition-colors cursor-pointer"
-                                    >
-                                      Chèn câu này
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const updated = scannedQuestions.filter((_, idx) => idx !== qIndex);
-                                        setScannedQuestions(updated);
-                                      }}
-                                      className="text-[10px] bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-1 px-2.5 rounded-lg transition-colors cursor-pointer border border-rose-100"
-                                    >
-                                      Xóa khỏi danh sách
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
+                {renderAIScanner()}
 
                     {/* Main Edit Form */}
                     <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
@@ -2871,26 +2878,7 @@ export default function AdminPanel({ onBackToTest }: AdminPanelProps) {
                           {renderVisualQuestionBuilder()}
                         </div>
 
-                        <div className="space-y-1 border-t border-slate-100 pt-4">
-                          <div className="flex justify-between items-center mb-1">
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase">Cấu trúc dữ liệu Câu hỏi (JSON Database Schema)</label>
-                            <button
-                              type="button"
-                              onClick={handleLoadJsonTemplate}
-                              className="text-[10px] font-extrabold text-indigo-900 hover:underline inline-flex items-center gap-1"
-                            >
-                              <Sparkles className="w-3 h-3" /> Tải Cấu trúc Mẫu (JSON Template)
-                            </button>
-                          </div>
-                          <textarea
-                            required
-                            placeholder="Dán JSON chứa các câu hỏi phần nghe, đọc, nói, viết, từ vựng và ngữ pháp tại đây..."
-                            value={examQuestionsJson}
-                            onChange={(e) => setExamQuestionsJson(e.target.value)}
-                            rows={12}
-                            className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-900 text-xs transition-all font-mono"
-                          />
-                        </div>
+
 
                         <div className="flex gap-3 pt-3 border-t border-slate-100">
                           <button
@@ -2904,7 +2892,6 @@ export default function AdminPanel({ onBackToTest }: AdminPanelProps) {
                       </form>
                     </div>
                   </>
-              </>
             ) : (
               /* NO EXAM SELECTED - DISPLAY EXPLANATION BANNER & MANUAL CREATE FORM */
               <>
@@ -2916,11 +2903,13 @@ export default function AdminPanel({ onBackToTest }: AdminPanelProps) {
                   </p>
                 </div>
 
+                {renderAIScanner()}
+
                 {/* Main Create Form */}
                 <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                   <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wide border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
                     <Plus className="w-4 h-4 text-indigo-900" />
-                    <span>TẠO ĐỀ THI THỦ CÔNG MỚI</span>
+                    <span>TẠO ĐỀ THI MỚI</span>
                   </h3>
 
                   <form onSubmit={handleCreateExam} className="space-y-4">
@@ -3009,26 +2998,6 @@ export default function AdminPanel({ onBackToTest }: AdminPanelProps) {
                       {renderVisualQuestionBuilder()}
                     </div>
 
-                    <div className="space-y-1 border-t border-slate-100 pt-4">
-                      <div className="flex justify-between items-center mb-1">
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase">Cấu trúc dữ liệu Câu hỏi (JSON Database Schema)</label>
-                        <button
-                          type="button"
-                          onClick={handleLoadJsonTemplate}
-                          className="text-[10px] font-extrabold text-indigo-900 hover:underline inline-flex items-center gap-1"
-                        >
-                          <Sparkles className="w-3 h-3" /> Tải Cấu trúc Mẫu (JSON Template)
-                        </button>
-                      </div>
-                      <textarea
-                        required
-                        placeholder="Dán JSON chứa các câu hỏi phần nghe, đọc, nói, viết, từ vựng và ngữ pháp tại đây..."
-                        value={examQuestionsJson}
-                        onChange={(e) => setExamQuestionsJson(e.target.value)}
-                        rows={12}
-                        className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-900 text-xs transition-all font-mono"
-                      />
-                    </div>
 
                     <div className="flex gap-3 pt-3 border-t border-slate-100">
                       <button

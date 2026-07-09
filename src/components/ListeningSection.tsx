@@ -138,7 +138,8 @@ export default function ListeningSection({
     if (currentQuestionId) {
       const targetElement = document.getElementById(`listening-q-${currentQuestionId}`);
       if (targetElement) {
-        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+        targetElement.scrollIntoView({ behavior: isMobile ? 'auto' : 'smooth', block: 'center' });
         // Add temporary highlight effect
         targetElement.classList.add('ring-2', 'ring-indigo-500', 'ring-offset-2');
         const timer = setTimeout(() => {

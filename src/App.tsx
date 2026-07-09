@@ -176,7 +176,8 @@ export default function App() {
 
   // Scroll to top when section changes (essential for mobile view UX to prevent missing questions)
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+    window.scrollTo({ top: 0, behavior: isMobile ? 'auto' : 'smooth' });
   }, [currentSection]);
 
   // Skipping question states

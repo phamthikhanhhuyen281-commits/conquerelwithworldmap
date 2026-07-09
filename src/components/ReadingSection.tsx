@@ -35,7 +35,8 @@ export default function ReadingSection({
     if (currentQuestionId) {
       const element = document.getElementById(`reading-q-${currentQuestionId}`);
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+        element.scrollIntoView({ behavior: isMobile ? 'auto' : 'smooth', block: 'center' });
         element.classList.add('ring-2', 'ring-indigo-500', 'ring-offset-2');
         const timer = setTimeout(() => {
           element.classList.remove('ring-2', 'ring-indigo-500', 'ring-offset-2');

@@ -48,30 +48,38 @@ html.dark body {
   color: #f8fafc;
 }
 
-/* Force light theme colors on Admin Panel to guarantee readability */
-#admin-dashboard-wrapper {
+/* Force light theme colors on Admin Panel and Test Taking workspace to guarantee readability */
+#admin-dashboard-wrapper,
+#test-taking-container {
   color: #0f172a !important;
   background-color: #f8fafc !important;
 }
 
-#admin-dashboard-wrapper .bg-white {
+#admin-dashboard-wrapper .bg-white,
+#test-taking-container .bg-white {
   background-color: #ffffff !important;
 }
 
 #admin-dashboard-wrapper input,
 #admin-dashboard-wrapper select,
-#admin-dashboard-wrapper textarea {
+#admin-dashboard-wrapper textarea,
+#test-taking-container input,
+#test-taking-container select,
+#test-taking-container textarea {
   color: #0f172a !important;
   background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
 }
 
 #admin-dashboard-wrapper input::placeholder,
-#admin-dashboard-wrapper textarea::placeholder {
+#admin-dashboard-wrapper textarea::placeholder,
+#test-taking-container input::placeholder,
+#test-taking-container textarea::placeholder {
   color: #94a3b8 !important;
 }
 
-#admin-dashboard-wrapper label {
+#admin-dashboard-wrapper label,
+#test-taking-container label {
   color: #475569 !important; /* text-slate-600 */
 }
 
@@ -80,13 +88,21 @@ html.dark body {
 #admin-dashboard-wrapper h3,
 #admin-dashboard-wrapper h4,
 #admin-dashboard-wrapper h5,
-#admin-dashboard-wrapper h6 {
+#admin-dashboard-wrapper h6,
+#test-taking-container h1,
+#test-taking-container h2,
+#test-taking-container h3,
+#test-taking-container h4,
+#test-taking-container h5,
+#test-taking-container h6 {
   color: #0f172a !important; /* text-slate-900 */
 }
 
-/* Maintain dark style for the header nav */
+/* Maintain dark style for the header nav and exam header */
 #admin-dashboard-wrapper nav,
-#admin-dashboard-wrapper nav * {
+#admin-dashboard-wrapper nav *,
+#test-taking-container header,
+#test-taking-container header * {
   background-color: #0f172a !important;
   color: #ffffff !important;
 }
